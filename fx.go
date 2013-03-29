@@ -16,6 +16,17 @@ func Trunc(component uint32) uint16 {
      return uint16(component)
 }
 
+// Strunc truncates a signed color component to a 16bits value
+func Strunc(component int32) uint16 {
+     if component > 0xFFFF {
+     	return 0xFFFF
+     }
+     if component < 0 {
+     	return 0
+     }
+     return uint16(component)
+}
+
 // Filter creates a new image which is a filtered copy of the input
 type Filter interface {
      Process(image.Image) image.Image
@@ -52,6 +63,37 @@ func NewBrightness(factor uint32) *Brightness {
      }
 }
 
+// Darkness is a filter that modifies the darkness of the image
+type Darkness struct {
+     Factor	uint32	// Percentage of darkness to apply
+}
+
+// Process applies a darkness filter to the image
+func (filter *Darkness) Process(in image.Image) image.Image {
+     bounds := in.Bounds()
+     out := image.NewRGBA(bounds)
+     for x := bounds.Min.X; x < bounds.Max.X; x++ {
+          for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+	      r, g, b, a := in.At(x, y).RGBA()
+
+	      nr := Strunc(int32(r - (0xFFFF * filter.Factor) / 100))
+	      ng := Strunc(int32(g - (0xFFFF * filter.Factor) / 100))
+	      nb := Strunc(int32(b - (0xFFFF * filter.Factor) / 100))
+
+	      nc := color.NRGBA64{nr, ng, nb, uint16(a)}
+	      out.Set(x, y, nc)
+	  }
+     }
+     return out.SubImage(bounds)
+}
+
+// NewDarkness creates a new filter for darkness
+func NewDarkness(factor uint32) *Darkness {
+     return &Darkness {
+     	    factor,
+     }
+}
+
 // GetImage returns the image pointed by path
 func GetImage(path string) image.Image {
      file, err := os.Open("sample.jpg")
@@ -80,7 +122,7 @@ func PutImage(image image.Image, path string) {
 
 func main() {
      input := GetImage("sample.jpg")
-     filter := NewBrightness(10)
+     filter := NewDarkness(50)
      output := filter.Process(input)
      PutImage(output, "/home/mxs/vhost/www/shots/paris/processed.jpg")
 }
