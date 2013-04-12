@@ -18,9 +18,9 @@ func (filter *Saturation) Process(in image.Image, out *image.RGBA, bounds image.
 
 			grey := (r + g + b) / 3
 
-			nr := Trunc(r + ((Abs(int32(r - grey)) * filter.Factor) / 100))
-			ng := Trunc(g + ((Abs(int32(g - grey)) * filter.Factor) / 100))
-			nb := Trunc(b + ((Abs(int32(b - grey)) * filter.Factor) / 100))
+			nr := Trunc(r + ((Abs(int32(r-grey)) * filter.Factor) / 100))
+			ng := Trunc(g + ((Abs(int32(g-grey)) * filter.Factor) / 100))
+			nb := Trunc(b + ((Abs(int32(b-grey)) * filter.Factor) / 100))
 
 			nc := color.NRGBA64{nr, ng, nb, uint16(a)}
 			out.Set(x, y, nc)

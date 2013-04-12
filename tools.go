@@ -1,5 +1,16 @@
 package main
 
+// ClipInt clips an integer between min and max
+func ClipInt(i int, min int, max int) int {
+	if i > max {
+		return max
+	}
+	if i < min {
+		return min
+	}
+	return i
+}
+
 // Trunc truncates a color component to a 16bits value
 func Trunc(component uint32) uint16 {
 	if component > 0xFFFF {

@@ -23,7 +23,7 @@ func ProcessInParallel(in image.Image, jobs int, worker Filter) image.Image {
 		max := image.Point{(i + 1) * x_unit, bounds.Max.Y}
 		area := image.Rectangle{min, max}
 		log.Printf("first job going from [%d,%d] to [%d,%d]", area.Min.X, area.Min.Y, area.Max.X, area.Max.Y)
-		go func (ch chan bool) {
+		go func(ch chan bool) {
 			worker.Process(in, out, area)
 			ch <- true
 		}(ch)
@@ -32,7 +32,7 @@ func ProcessInParallel(in image.Image, jobs int, worker Filter) image.Image {
 	// Wait for workers to complete
 	for done != jobs {
 		select {
-		case <- ch:
+		case <-ch:
 			done++
 		}
 	}
