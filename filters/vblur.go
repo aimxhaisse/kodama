@@ -1,17 +1,22 @@
-package main
+package filters
 
 import (
 	"image"
 	"image/color"
 )
 
-// VerticalBlur is a filter that adds a vertical blur to the image
-type VerticalBlur struct {
+// VBlur is a filter that adds a vertical blur to the image
+type VBlur struct {
 	Radius int
 }
 
+// IsScalable returns false because VBlur is not a scalable filter
+func (filter *VBlur) IsScalable() bool {
+	return false
+}
+
 // Process applies a vertical blur filter to the image (efficient implementation)
-func (filter *VerticalBlur) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
+func (filter *VBlur) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
 		prev_blur := filter.computeInitialBlur(in, bounds, x)
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
@@ -36,7 +41,8 @@ func (filter *VerticalBlur) Process(in image.Image, out *image.RGBA, bounds imag
 	}
 }
 
-func (filter *VerticalBlur) computeInitialBlur(in image.Image, bounds image.Rectangle, x int) color.Color {
+// computeInitialBlur computes the blur of the bound pixel
+func (filter *VBlur) computeInitialBlur(in image.Image, bounds image.Rectangle, x int) color.Color {
 	start := ClipInt(bounds.Min.Y-filter.Radius/2, 0, bounds.Max.Y)
 	end := ClipInt(bounds.Min.Y+filter.Radius/2, 0, bounds.Max.Y)
 
@@ -58,9 +64,9 @@ func (filter *VerticalBlur) computeInitialBlur(in image.Image, bounds image.Rect
 	return color.NRGBA64{r, g, b, a}
 }
 
-// NewVerticalBlur creates a new filter for blur
-func NewVerticalBlur(radius int) *VerticalBlur {
-	return &VerticalBlur{
+// NewVBlur creates a new filter for blur
+func NewVBlur(radius int) *VBlur {
+	return &VBlur{
 		radius,
 	}
 }

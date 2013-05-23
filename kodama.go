@@ -5,15 +5,12 @@ import (
 	"image/jpeg"
 	"log"
 	"os"
+	"runtime"
+	"kodama/filters"
 )
 
-// Filter creates a new image which is a filtered copy of the input
-type Filter interface {
-	Process(in image.Image, out *image.RGBA, area image.Rectangle)
-}
-
 // Split a job and send chunks to several workers
-func ProcessInParallel(in image.Image, jobs int, worker Filter) image.Image {
+func ProcessInParallel(in image.Image, jobs int, worker filters.Filter) image.Image {
 	bounds := in.Bounds()
 	x_unit := (bounds.Max.X - bounds.Min.X) / jobs
 	ch := make(chan bool)
@@ -63,4 +60,12 @@ func PutImage(image image.Image, path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	runtime.GOMAXPROCS(4)
+	input := GetImage("sample.jpg")
+	blur := filters.NewHBlur(20)
+	output := ProcessInParallel(input, 4, blur)
+	PutImage(output, "processed.jpg")
 }

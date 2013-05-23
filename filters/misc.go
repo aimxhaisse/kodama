@@ -1,4 +1,12 @@
-package main
+package filters
+
+import "image"
+
+// Filter creates a new image which is a filtered copy of the input
+type Filter interface {
+	Process(in image.Image, out *image.RGBA, area image.Rectangle)
+	IsScalable() bool
+}
 
 // ClipInt clips an integer between min and max
 func ClipInt(i int, min int, max int) int {

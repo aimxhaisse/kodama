@@ -1,4 +1,4 @@
-package main
+package filters
 
 import (
 	"image"
@@ -8,6 +8,11 @@ import (
 // Brightness is a filter that modifies the brightness of the image
 type Brightness struct {
 	Factor uint32 // Percentage of brightness to apply
+}
+
+// IsScalable returns true because Brightness is a scalable filter
+func (filter *Brightness) IsScalable() bool {
+	 return true
 }
 
 // Process applies a brightness filter to the image

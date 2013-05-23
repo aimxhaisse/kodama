@@ -1,4 +1,4 @@
-package main
+package filters
 
 import (
 	"image"
@@ -8,6 +8,11 @@ import (
 // Blur is a filter that adds a blur to the image
 type Blur struct {
 	Radius int
+}
+
+// IsScalable returns true as this filter is scalable
+func (filter *Blur) IsScalable() bool {
+	return true
 }
 
 // Process applies a blur filter to the image

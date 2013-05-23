@@ -1,4 +1,4 @@
-package main
+package filters
 
 import (
 	"image"
@@ -8,6 +8,11 @@ import (
 // Saturation is a filter that modifies the saturation of the image
 type Saturation struct {
 	Factor uint32 // Percentage of saturation to apply
+}
+
+// IsScalable returns true because Saturation is a scalable filter
+func (filter *Saturation) IsScalable() bool {
+	return true
 }
 
 // Process applies a darkness filter to the image
