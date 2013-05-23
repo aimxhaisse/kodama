@@ -12,7 +12,7 @@ type Brightness struct {
 
 // IsScalable returns true because Brightness is a scalable filter
 func (filter *Brightness) IsScalable() bool {
-	 return true
+	return true
 }
 
 // Process applies a brightness filter to the image

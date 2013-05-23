@@ -29,10 +29,10 @@ func (filter *VBlur) Process(in image.Image, out *image.RGBA, bounds image.Recta
 			nr, ng, nb, na := in.At(x, next_y).RGBA()
 			vbr, vbg, vbb, vba := prev_blur.RGBA()
 
-			cvbr := uint16(ClipInt((int(vbr)*nb_elems - int(pr) + int(nr)) / nb_elems, 0, 0xFFFF))
-			cvbg := uint16(ClipInt((int(vbg)*nb_elems - int(pg) + int(ng)) / nb_elems, 0, 0xFFFF))
-			cvbb := uint16(ClipInt((int(vbb)*nb_elems - int(pb) + int(nb)) / nb_elems, 0, 0xFFFF))
-			cvba := uint16(ClipInt((int(vba)*nb_elems - int(pa) + int(na)) / nb_elems, 0, 0xFFFF))
+			cvbr := uint16(ClipInt((int(vbr)*nb_elems-int(pr)+int(nr))/nb_elems, 0, 0xFFFF))
+			cvbg := uint16(ClipInt((int(vbg)*nb_elems-int(pg)+int(ng))/nb_elems, 0, 0xFFFF))
+			cvbb := uint16(ClipInt((int(vbb)*nb_elems-int(pb)+int(nb))/nb_elems, 0, 0xFFFF))
+			cvba := uint16(ClipInt((int(vba)*nb_elems-int(pa)+int(na))/nb_elems, 0, 0xFFFF))
 
 			next_blur := color.NRGBA64{cvbr, cvbg, cvbb, cvba}
 			out.Set(x, y, next_blur)
@@ -56,10 +56,10 @@ func (filter *VBlur) computeInitialBlur(in image.Image, bounds image.Rectangle, 
 	}
 
 	nb_iter := (end - start) + 1
-	r := uint16(ClipInt(vbr / nb_iter, 0, 0xFFFF))
-	g := uint16(ClipInt(vbg / nb_iter, 0, 0xFFFF))
-	b := uint16(ClipInt(vbb / nb_iter, 0, 0xFFFF))
-	a := uint16(ClipInt(vba / nb_iter, 0, 0xFFFF))
+	r := uint16(ClipInt(vbr/nb_iter, 0, 0xFFFF))
+	g := uint16(ClipInt(vbg/nb_iter, 0, 0xFFFF))
+	b := uint16(ClipInt(vbb/nb_iter, 0, 0xFFFF))
+	a := uint16(ClipInt(vba/nb_iter, 0, 0xFFFF))
 
 	return color.NRGBA64{r, g, b, a}
 }

@@ -1,0 +1,11 @@
+#!/usr/bin/env kodama
+#
+# This file describes the syntax of kodama scripts.
+
+with tree.png as mytree
+     vblur 10    
+     brightness 10
+done
+
+with mytree as mynewtree.png
+done
