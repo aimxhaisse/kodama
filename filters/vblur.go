@@ -3,11 +3,22 @@ package filters
 import (
 	"image"
 	"image/color"
+	"errors"
 )
 
 // VBlur is a filter that adds a vertical blur to the image
 type VBlur struct {
-	Radius int
+	Strength int
+}
+
+// NewVBlur creates a new filter for blur
+func NewVBlur(strength int) (*VBlur, error) {
+	if strength > 0 {
+		return &VBlur{
+			strength,
+		}, nil
+	}
+	return nil, errors.New("parameter 'strenght' must be > 0")
 }
 
 // IsScalable returns false because VBlur is not a scalable filter
@@ -20,8 +31,8 @@ func (filter *VBlur) Process(in image.Image, out *image.RGBA, bounds image.Recta
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
 		prev_blur := filter.computeInitialBlur(in, bounds, x)
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			prev_y := ClipInt(y-filter.Radius/2, 0, bounds.Max.Y-1)
-			next_y := ClipInt(y+filter.Radius/2, 0, bounds.Max.Y-1)
+			prev_y := ClipInt(y-filter.Strength/2, 0, bounds.Max.Y-1)
+			next_y := ClipInt(y+filter.Strength/2, 0, bounds.Max.Y-1)
 
 			nb_elems := next_y - prev_y + 1
 
@@ -43,8 +54,8 @@ func (filter *VBlur) Process(in image.Image, out *image.RGBA, bounds image.Recta
 
 // computeInitialBlur computes the blur of the bound pixel
 func (filter *VBlur) computeInitialBlur(in image.Image, bounds image.Rectangle, x int) color.Color {
-	start := ClipInt(bounds.Min.Y-filter.Radius/2, 0, bounds.Max.Y)
-	end := ClipInt(bounds.Min.Y+filter.Radius/2, 0, bounds.Max.Y)
+	start := ClipInt(bounds.Min.Y-filter.Strength/2, 0, bounds.Max.Y)
+	end := ClipInt(bounds.Min.Y+filter.Strength/2, 0, bounds.Max.Y)
 
 	var vbr, vbg, vbb, vba int
 	for iter := start; iter <= end; iter++ {
@@ -62,11 +73,4 @@ func (filter *VBlur) computeInitialBlur(in image.Image, bounds image.Rectangle, 
 	a := uint16(ClipInt(vba/nb_iter, 0, 0xFFFF))
 
 	return color.NRGBA64{r, g, b, a}
-}
-
-// NewVBlur creates a new filter for blur
-func NewVBlur(radius int) *VBlur {
-	return &VBlur{
-		radius,
-	}
 }

@@ -3,18 +3,22 @@ package filters
 import (
 	"image"
 	"image/color"
+	"errors"
 )
 
 // HBlur is a filter that adds a horizontal blur to the image
 type HBlur struct {
-	Radius int
+	Strength int
 }
 
-// NewHBlur creates a new filter for horizontal blur
-func NewHBlur(radius int) *HBlur {
-	return &HBlur{
-		radius,
+// NewHBlur creates a new filter for blur
+func NewHBlur(strength int) (*HBlur, error) {
+	if strength > 0 {
+		return &HBlur{
+			strength,
+		}, nil
 	}
+	return nil, errors.New("parameter 'strenght' must be > 0")
 }
 
 // IsScalable returns false because this filter is not scalable
@@ -27,8 +31,8 @@ func (filter *HBlur) Process(in image.Image, out *image.RGBA, bounds image.Recta
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		prev_blur := filter.computeInitialBlur(in, bounds, y)
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			prev_x := ClipInt(x-filter.Radius/2, 0, bounds.Max.X-1)
-			next_x := ClipInt(x+filter.Radius/2, 0, bounds.Max.X-1)
+			prev_x := ClipInt(x-filter.Strength/2, 0, bounds.Max.X-1)
+			next_x := ClipInt(x+filter.Strength/2, 0, bounds.Max.X-1)
 
 			nb_elems := next_x - prev_x + 1
 
@@ -50,8 +54,8 @@ func (filter *HBlur) Process(in image.Image, out *image.RGBA, bounds image.Recta
 
 // computeInitialBlur computes the blur of the bound pixel
 func (filter *HBlur) computeInitialBlur(in image.Image, bounds image.Rectangle, y int) color.Color {
-	start := ClipInt(bounds.Min.X-filter.Radius/2, 0, bounds.Max.X)
-	end := ClipInt(bounds.Min.X+filter.Radius/2, 0, bounds.Max.X)
+	start := ClipInt(bounds.Min.X-filter.Strength/2, 0, bounds.Max.X)
+	end := ClipInt(bounds.Min.X+filter.Strength/2, 0, bounds.Max.X)
 
 	var vbr, vbg, vbb, vba int
 	for iter := start; iter <= end; iter++ {

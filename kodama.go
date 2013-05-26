@@ -11,8 +11,17 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"fmt"
 	"strings"
+	"strconv"
 )
+
+// # TODO:
+// - common interface to report errors (line, ...)
+// - input/output
+// - resizer
+// - doc/with many samples
+// - histo
 
 var input_file = flag.String("infile", "", "input file")
 
@@ -86,25 +95,78 @@ type Step struct {
 // Instruction 
 type Instruction struct {
 	Argv      []string
-	Operation *filters.Filter
+	Operation filters.Filter
 	Parent    *Step
 }
 
+// NewInstruction creates a new instruction for the given parameters
 func NewInstruction(s *Step, tokens []string) (*Instruction, error) {
 	res := Instruction{}
 
 	res.Argv = tokens
 	res.Parent = s
 
+	op := tokens[0]
+
+	log.Printf("new instruction: %s", op)
+
+	switch op {
+
+	case "blur":
+		if len(tokens) != 2 {
+			return nil, s.Parent.Error("invalid syntax for 'blur', expected usage: blur <radius>")
+		}
+		r, err := strconv.Atoi(tokens[1])
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'blur': %s", err.Error()))
+		}
+		res.Operation, err = filters.NewBlur(r)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create 'blur': %s", err.Error()))
+		}
+
+	case "vblur":
+		if len(tokens) != 2 {
+			return nil, s.Parent.Error("invalid syntax for 'vblur', expected usage: vblur <strength>")
+		}
+		r, err := strconv.Atoi(tokens[1])
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'vblur': %s", err.Error()))
+		}
+		res.Operation, err = filters.NewVBlur(r)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create 'vblur': %s", err.Error()))
+		}
+
+	case "hblur":
+		if len(tokens) != 2 {
+			return nil, s.Parent.Error("invalid syntax for 'hblur', expected usage: hblur <strength>")
+		}
+		r, err := strconv.Atoi(tokens[1])
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'hblur': %s", err.Error()))
+		}
+		res.Operation, err = filters.NewHBlur(r)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create 'hblur': %s", err.Error()))
+		}		
+
+	default:
+		return nil, s.Parent.Error(fmt.Sprintf("unknown operation: '%s'", op))
+	}
+
 	return &res, nil
 }
 
+// NewStep creates a step for the given script
 func NewStep(s *Script, tokens []string) (*Step, error) {
 	res := Step{}
 
 	if len(tokens) != 4 || tokens[2] != "as" || tokens[0] != "with" {
-		return nil, errors.New("syntax error, expected syntax: with <input> as <output>")
+		return nil, s.Error("syntax error, expected syntax: with <input> as <output>")
 	}
+
+	log.Printf("new step")
 
 	res.Parent = s
 	res.Input = tokens[1]
@@ -113,6 +175,7 @@ func NewStep(s *Script, tokens []string) (*Step, error) {
 	return &res, nil
 }
 
+// NewScript creates, parses and returns a Script ready to be exercuted
 func NewScript(path string) (*Script, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -139,8 +202,9 @@ func NewScript(path string) (*Script, error) {
 		log.Printf("processing %s", line)
 
 		res.CurrentLine++
-		tokens := strings.Split(strings.Trim(line, "\n"), " ")
+		tokens := strings.Split(strings.TrimSpace(strings.Trim(line, "\n")), " ")
 		if len(tokens) == 0 || len(tokens[0]) == 0 || (len(tokens[0]) > 0 && tokens[0][0] == '#') {
+			log.Printf("skipped")
 			continue
 		}
 		if expect_step {
@@ -168,6 +232,11 @@ func NewScript(path string) (*Script, error) {
 	return &res, nil
 }
 
+// Error returns a new error with extra information about the context
+func (s *Script) Error(e string) error {
+	return errors.New(fmt.Sprintf("error on line %d: %s", s.CurrentLine, e))
+}
+
 func main() {
 	flag.Parse()
 
@@ -181,7 +250,7 @@ func main() {
 		log.Fatalf(e.Error())
 	}
 
-	/* runtime.GOMAXPROCS(4) */
+	runtime.GOMAXPROCS(4)
 	/* input := GetImage("sample.jpg") */
 	/* blur := filters.NewHBlur(20) */
 	/* output := ProcessInParallel(input, 4, blur) */

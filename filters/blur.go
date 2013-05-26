@@ -3,6 +3,7 @@ package filters
 import (
 	"image"
 	"image/color"
+	"errors"
 )
 
 // Blur is a filter that adds a blur to the image
@@ -10,13 +11,23 @@ type Blur struct {
 	Radius int
 }
 
+// NewBlur creates a new filter for blur
+func NewBlur(radius int) (*Blur, error) {
+	if radius > 0 {
+		return &Blur{
+			radius,
+		}, nil
+	}
+	return nil, errors.New("parameter 'radius' must be > 0")
+}
+
 // IsScalable returns true as this filter is scalable
-func (filter *Blur) IsScalable() bool {
+func (filter Blur) IsScalable() bool {
 	return true
 }
 
 // Process applies a blur filter to the image
-func (filter *Blur) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
+func (filter Blur) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
 	// This is a naive implementation with a high complexity.
 	// Each output pixel is the average of all pixels in its
 	// surrounding box, thus complexity is W*H*R^2
@@ -59,12 +70,5 @@ func (filter *Blur) Process(in image.Image, out *image.RGBA, bounds image.Rectan
 			nc := color.NRGBA64{uint16(avg_r / pixels), uint16(avg_g / pixels), uint16(avg_b / pixels), uint16(a)}
 			out.Set(x, y, nc)
 		}
-	}
-}
-
-// NewBlur creates a new filter for blur
-func NewBlur(radius int) *Blur {
-	return &Blur{
-		radius,
 	}
 }
