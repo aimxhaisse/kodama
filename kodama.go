@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"flag"
-	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
@@ -18,8 +17,6 @@ import (
 )
 
 // # TODO:
-// - common interface to report errors (line, ...)
-// - input/output
 // - resizer
 // - doc/with many samples
 // - histo
@@ -90,6 +87,7 @@ type Step struct {
 	Parent       *Script
 	Input        string
 	Output       string
+	Id	     int
 }
 
 // Instruction 
@@ -97,14 +95,16 @@ type Instruction struct {
 	Argv      []string
 	Operation filters.Filter
 	Parent    *Step
+	Id	  int
 }
 
 // NewInstruction creates a new instruction for the given parameters
-func NewInstruction(s *Step, tokens []string) (*Instruction, error) {
+func NewInstruction(s *Step, tokens []string, id int) (*Instruction, error) {
 	res := Instruction{}
 
 	res.Argv = tokens
 	res.Parent = s
+	res.Id = id
 
 	op := tokens[0]
 
@@ -170,7 +170,7 @@ func NewInstruction(s *Step, tokens []string) (*Instruction, error) {
 }
 
 // NewStep creates a step for the given script
-func NewStep(s *Script, tokens []string) (*Step, error) {
+func NewStep(s *Script, tokens []string, id int) (*Step, error) {
 	res := Step{}
 
 	if len(tokens) != 4 || tokens[2] != "as" || tokens[0] != "with" {
@@ -180,6 +180,7 @@ func NewStep(s *Script, tokens []string) (*Step, error) {
 	res.Parent = s
 	res.Input = tokens[1]
 	res.Output = tokens[3]
+	res.Id = id
 
 	return &res, nil
 }
@@ -214,7 +215,7 @@ func NewScript(path string) (*Script, error) {
 			continue
 		}
 		if expect_step {
-			new_step, err := NewStep(&res, tokens)
+			new_step, err := NewStep(&res, tokens, len(res.Steps) + 1)
 			if err != nil {
 				return nil, err
 			}
@@ -226,7 +227,7 @@ func NewScript(path string) (*Script, error) {
 				current_step = nil
 				expect_step = true
 			} else {
-				new_instr, err := NewInstruction(current_step, tokens)
+				new_instr, err := NewInstruction(current_step, tokens, len(current_step.Instructions) + 1)
 				if err != nil {
 					return nil, err
 				}
@@ -247,7 +248,7 @@ func (s *Script) Error(e string) error {
 func (s *Script) Execute() error {
 	for i := 0; i < len(s.Steps); i++ {
 		cur_step := s.Steps[i]
-
+		fmt.Printf("step %d/%d\n", cur_step.Id, len(s.Steps))
 		img, err := GetImage(cur_step.Input)
 		if err != nil {
 			return errors.New(fmt.Sprintf("can't open input %s: %s", cur_step.Input, err.Error()))
@@ -255,14 +256,17 @@ func (s *Script) Execute() error {
 
 		for j := 0; j < len(cur_step.Instructions); j++ {
 			cur_instr := cur_step.Instructions[j]
+			fmt.Printf("\tinstruction %d/%d (%s)... ", cur_instr.Id, len(cur_step.Instructions), cur_instr.Argv[0])
 			op := cur_instr.Operation
 			if op.IsScalable() {
 				*img = ProcessInParallel(*img, 4, op)
 			} else {
 				*img = ProcessInParallel(*img, 1, op)
 			}
+			fmt.Printf("done\n")
 		}
 		PutImage(*img, cur_step.Output)
+		fmt.Printf("done\n");
 	}
 	return nil
 }
@@ -286,9 +290,4 @@ func main() {
 	if e != nil {
 		log.Fatalf(e.Error())
 	}
-
-	/* input := GetImage("sample.jpg") */
-	/* blur := filters.NewHBlur(20) */
-	/* output := ProcessInParallel(input, 4, blur) */
-	/* PutImage(output, "processed.jpg") */
 }
