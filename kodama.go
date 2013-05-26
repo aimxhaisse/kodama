@@ -151,6 +151,19 @@ func NewInstruction(s *Step, tokens []string) (*Instruction, error) {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create 'hblur': %s", err.Error()))
 		}		
 
+	case "brightness":
+		if len(tokens) != 2 {
+			return nil, s.Parent.Error("invalid syntax for 'brightness', expected usage: brightness <strength>")
+		}
+		r, err := strconv.Atoi(tokens[1])
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'brightness': %s", err.Error()))
+		}
+		res.Operation, err = filters.NewBrightness(r)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create 'brightness': %s", err.Error()))
+		}		
+
 	default:
 		return nil, s.Parent.Error(fmt.Sprintf("unknown operation: '%s'", op))
 	}
