@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"flag"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
@@ -11,9 +12,8 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 // # TODO:
@@ -87,7 +87,7 @@ type Step struct {
 	Parent       *Script
 	Input        string
 	Output       string
-	Id	     int
+	Id           int
 }
 
 // Instruction 
@@ -186,22 +186,16 @@ func NewStep(s *Script, tokens []string, id int) (*Step, error) {
 }
 
 // NewScript creates, parses and returns a Script ready to be exercuted
-func NewScript(path string) (*Script, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+func NewScript(file *os.File) (*Script, error) {
 	reader := bufio.NewReader(file)
 
 	res := Script{}
 
-	var line string
 	var expect_step bool = true
 	var current_step *Step = nil
 
 	for {
-		line, err = reader.ReadString('\n')
+		line, err := reader.ReadString('\n')
 
 		if err == io.EOF {
 			break
@@ -215,7 +209,7 @@ func NewScript(path string) (*Script, error) {
 			continue
 		}
 		if expect_step {
-			new_step, err := NewStep(&res, tokens, len(res.Steps) + 1)
+			new_step, err := NewStep(&res, tokens, len(res.Steps)+1)
 			if err != nil {
 				return nil, err
 			}
@@ -227,7 +221,7 @@ func NewScript(path string) (*Script, error) {
 				current_step = nil
 				expect_step = true
 			} else {
-				new_instr, err := NewInstruction(current_step, tokens, len(current_step.Instructions) + 1)
+				new_instr, err := NewInstruction(current_step, tokens, len(current_step.Instructions)+1)
 				if err != nil {
 					return nil, err
 				}
@@ -266,7 +260,7 @@ func (s *Script) Execute() error {
 			fmt.Printf("done\n")
 		}
 		PutImage(*img, cur_step.Output)
-		fmt.Printf("done\n");
+		fmt.Printf("done\n")
 	}
 	return nil
 }
@@ -274,12 +268,20 @@ func (s *Script) Execute() error {
 func main() {
 	flag.Parse()
 
+	var in *os.File
+
 	if len(*input_file) == 0 {
-		flag.Usage()
-		os.Exit(1)
+		in = os.Stdin
+	} else {
+		var err error
+		in, err = os.Open(*input_file)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+		defer in.Close()
 	}
 
-	s, e := NewScript(*input_file)
+	s, e := NewScript(in)
 	if e != nil {
 		log.Fatalf(e.Error())
 	}
