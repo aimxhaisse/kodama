@@ -1,9 +1,9 @@
 package filters
 
 import (
+	"errors"
 	"image"
 	"image/color"
-	"errors"
 )
 
 // Blur is a filter that adds a blur to the image

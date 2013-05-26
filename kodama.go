@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"flag"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
@@ -35,7 +36,6 @@ func ProcessInParallel(in image.Image, jobs int, worker filters.Filter) image.Im
 		min := image.Point{i * x_unit, bounds.Min.Y}
 		max := image.Point{(i + 1) * x_unit, bounds.Max.Y}
 		area := image.Rectangle{min, max}
-		log.Printf("first job going from [%d,%d] to [%d,%d]", area.Min.X, area.Min.Y, area.Max.X, area.Max.Y)
 		go func(ch chan bool) {
 			worker.Process(in, out, area)
 			ch <- true
@@ -53,17 +53,17 @@ func ProcessInParallel(in image.Image, jobs int, worker filters.Filter) image.Im
 }
 
 // GetImage returns the image pointed by path
-func GetImage(path string) image.Image {
-	file, err := os.Open("sample.jpg")
+func GetImage(path string) (*image.Image, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	image, _, err := image.Decode(file)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	file.Close()
-	return image
+	return &image, nil
 }
 
 // PutImage write the image to path
@@ -108,64 +108,62 @@ func NewInstruction(s *Step, tokens []string) (*Instruction, error) {
 
 	op := tokens[0]
 
-	log.Printf("new instruction: %s", op)
-
 	switch op {
 
 	case "blur":
 		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for 'blur', expected usage: blur <radius>")
+			return nil, s.Parent.Error("invalid syntax for blur, expected usage: blur <radius>")
 		}
 		r, err := strconv.Atoi(tokens[1])
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'blur': %s", err.Error()))
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for blur: %s", err.Error()))
 		}
 		res.Operation, err = filters.NewBlur(r)
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("can't create 'blur': %s", err.Error()))
+			return nil, s.Parent.Error(fmt.Sprintf("can't create blur: %s", err.Error()))
 		}
 
 	case "vblur":
 		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for 'vblur', expected usage: vblur <strength>")
+			return nil, s.Parent.Error("invalid syntax for vblur, expected usage: vblur <strength>")
 		}
 		r, err := strconv.Atoi(tokens[1])
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'vblur': %s", err.Error()))
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for vblur: %s", err.Error()))
 		}
 		res.Operation, err = filters.NewVBlur(r)
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("can't create 'vblur': %s", err.Error()))
+			return nil, s.Parent.Error(fmt.Sprintf("can't create vblur: %s", err.Error()))
 		}
 
 	case "hblur":
 		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for 'hblur', expected usage: hblur <strength>")
+			return nil, s.Parent.Error("invalid syntax for hblur, expected usage: hblur <strength>")
 		}
 		r, err := strconv.Atoi(tokens[1])
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'hblur': %s", err.Error()))
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for hblur: %s", err.Error()))
 		}
 		res.Operation, err = filters.NewHBlur(r)
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("can't create 'hblur': %s", err.Error()))
-		}		
+			return nil, s.Parent.Error(fmt.Sprintf("can't create hblur: %s", err.Error()))
+		}
 
 	case "brightness":
 		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for 'brightness', expected usage: brightness <strength>")
+			return nil, s.Parent.Error("invalid syntax for brightness, expected usage: brightness <strength>")
 		}
 		r, err := strconv.Atoi(tokens[1])
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for 'brightness': %s", err.Error()))
+			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for brightness: %s", err.Error()))
 		}
 		res.Operation, err = filters.NewBrightness(r)
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("can't create 'brightness': %s", err.Error()))
-		}		
+			return nil, s.Parent.Error(fmt.Sprintf("can't create brightness: %s", err.Error()))
+		}
 
 	default:
-		return nil, s.Parent.Error(fmt.Sprintf("unknown operation: '%s'", op))
+		return nil, s.Parent.Error(fmt.Sprintf("unknown operation: %s", op))
 	}
 
 	return &res, nil
@@ -178,8 +176,6 @@ func NewStep(s *Script, tokens []string) (*Step, error) {
 	if len(tokens) != 4 || tokens[2] != "as" || tokens[0] != "with" {
 		return nil, s.Error("syntax error, expected syntax: with <input> as <output>")
 	}
-
-	log.Printf("new step")
 
 	res.Parent = s
 	res.Input = tokens[1]
@@ -212,12 +208,9 @@ func NewScript(path string) (*Script, error) {
 			return nil, err
 		}
 
-		log.Printf("processing %s", line)
-
 		res.CurrentLine++
 		tokens := strings.Split(strings.TrimSpace(strings.Trim(line, "\n")), " ")
 		if len(tokens) == 0 || len(tokens[0]) == 0 || (len(tokens[0]) > 0 && tokens[0][0] == '#') {
-			log.Printf("skipped")
 			continue
 		}
 		if expect_step {
@@ -250,6 +243,30 @@ func (s *Script) Error(e string) error {
 	return errors.New(fmt.Sprintf("error on line %d: %s", s.CurrentLine, e))
 }
 
+// Execute executes the script
+func (s *Script) Execute() error {
+	for i := 0; i < len(s.Steps); i++ {
+		cur_step := s.Steps[i]
+
+		img, err := GetImage(cur_step.Input)
+		if err != nil {
+			return errors.New(fmt.Sprintf("can't open input %s: %s", cur_step.Input, err.Error()))
+		}
+
+		for j := 0; j < len(cur_step.Instructions); j++ {
+			cur_instr := cur_step.Instructions[j]
+			op := cur_instr.Operation
+			if op.IsScalable() {
+				*img = ProcessInParallel(*img, 4, op)
+			} else {
+				*img = ProcessInParallel(*img, 1, op)
+			}
+		}
+		PutImage(*img, cur_step.Output)
+	}
+	return nil
+}
+
 func main() {
 	flag.Parse()
 
@@ -258,12 +275,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, e := NewScript(*input_file)
+	s, e := NewScript(*input_file)
 	if e != nil {
 		log.Fatalf(e.Error())
 	}
 
 	runtime.GOMAXPROCS(4)
+
+	e = s.Execute()
+	if e != nil {
+		log.Fatalf(e.Error())
+	}
+
 	/* input := GetImage("sample.jpg") */
 	/* blur := filters.NewHBlur(20) */
 	/* output := ProcessInParallel(input, 4, blur) */
