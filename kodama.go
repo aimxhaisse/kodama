@@ -135,6 +135,12 @@ func NewInstruction(s *Step, tokens []string, id int) (*Instruction, error) {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create brightness: %s", err.Error()))
 		}
 
+	case "saturation":
+		res.Operation, err = filters.NewSaturation(tokens)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create saturation: %s", err.Error()))
+		}
+	
 	case "resize":
 		res.Operation, err = filters.NewResize(tokens)
 		if err != nil {
