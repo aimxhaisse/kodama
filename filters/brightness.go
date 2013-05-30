@@ -2,10 +2,10 @@ package filters
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"strconv"
-	"fmt"
 )
 
 // Brightness is a filter that modifies the brightness of the image

@@ -1,11 +1,11 @@
 package filters
 
 import (
+	"errors"
+	"fmt"
 	"image"
 	"image/color"
-	"errors"
 	"strconv"
-	"fmt"
 )
 
 // Saturation is a filter that modifies the saturation of the image

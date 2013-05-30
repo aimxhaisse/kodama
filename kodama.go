@@ -94,7 +94,7 @@ type Instruction struct {
 	Argv      []string
 	Operation filters.Filter
 	Parent    *Step
-	Id	  int
+	Id        int
 }
 
 // NewInstruction creates a new instruction for the given parameters
@@ -135,12 +135,18 @@ func NewInstruction(s *Step, tokens []string, id int) (*Instruction, error) {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create brightness: %s", err.Error()))
 		}
 
+	case "darkness":
+		res.Operation, err = filters.NewDarkness(tokens)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create darkness: %s", err.Error()))
+		}
+
 	case "saturation":
 		res.Operation, err = filters.NewSaturation(tokens)
 		if err != nil {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create saturation: %s", err.Error()))
 		}
-	
+
 	case "resize":
 		res.Operation, err = filters.NewResize(tokens)
 		if err != nil {

@@ -2,10 +2,10 @@ package filters
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"strconv"
-	"fmt"
 )
 
 // Blur is a filter that adds a blur to the image

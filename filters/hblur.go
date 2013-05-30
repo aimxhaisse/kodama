@@ -2,10 +2,10 @@ package filters
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"strconv"
-	"fmt"
 )
 
 // HBlur is a filter that adds a horizontal blur to the image

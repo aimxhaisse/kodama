@@ -2,10 +2,10 @@ package filters
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"strconv"
-	"fmt"
 )
 
 // VBlur is a filter that adds a vertical blur to the image

@@ -2,8 +2,8 @@ package filters
 
 import (
 	"errors"
-	"image"
 	"fmt"
+	"image"
 	"strconv"
 )
 
