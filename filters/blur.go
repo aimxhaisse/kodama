@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"strconv"
+	"fmt"
 )
 
 // Blur is a filter that adds a blur to the image
@@ -12,7 +14,14 @@ type Blur struct {
 }
 
 // NewBlur creates a new filter for blur
-func NewBlur(radius int) (*Blur, error) {
+func NewBlur(argv []string) (*Blur, error) {
+	if len(argv) != 2 {
+		return nil, errors.New("invalid syntax for blur, expected usage: blur <radius>")
+	}
+	radius, err := strconv.Atoi(argv[1])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("invalid parameter for blur: %s", err.Error()))
+	}
 	if radius > 0 {
 		return &Blur{
 			radius,

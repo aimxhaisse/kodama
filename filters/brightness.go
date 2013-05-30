@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"strconv"
+	"fmt"
 )
 
 // Brightness is a filter that modifies the brightness of the image
@@ -12,7 +14,14 @@ type Brightness struct {
 }
 
 // NewBrightness creates a new filter for brightness
-func NewBrightness(strength int) (*Brightness, error) {
+func NewBrightness(argv []string) (*Brightness, error) {
+	if len(argv) != 2 {
+		return nil, errors.New("invalid syntax for brightness, expected usage: brightness <strength>")
+	}
+	strength, err := strconv.Atoi(argv[1])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("invalid parameter for brightness: %s", err.Error()))
+	}
 	if strength > 0 {
 		return &Brightness{
 			uint32(strength),

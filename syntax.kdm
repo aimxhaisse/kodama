@@ -2,7 +2,10 @@
 #
 # This file describes the syntax of kodama scripts.
 
-with tree.png as mytree.png
-     vblur 200
-     brightness 50
+with bzh.jpg as bzh_400.jpg
+     resize 400 300
+done
+
+with bzh_400.jpg as bzh_2000.jpg
+     resize 2000 1800
 done

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"strconv"
+	"fmt"
 )
 
 // VBlur is a filter that adds a vertical blur to the image
@@ -12,7 +14,14 @@ type VBlur struct {
 }
 
 // NewVBlur creates a new filter for blur
-func NewVBlur(strength int) (*VBlur, error) {
+func NewVBlur(argv []string) (*VBlur, error) {
+	if len(argv) != 2 {
+		return nil, errors.New("invalid syntax for vblur, expected usage: vblur <strength>")
+	}
+	strength, err := strconv.Atoi(argv[1])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("invalid parameter for vblur: %s", err.Error()))
+	}
 	if strength > 0 {
 		return &VBlur{
 			strength,

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"strconv"
+	"fmt"
 )
 
 // HBlur is a filter that adds a horizontal blur to the image
@@ -12,7 +14,14 @@ type HBlur struct {
 }
 
 // NewHBlur creates a new filter for blur
-func NewHBlur(strength int) (*HBlur, error) {
+func NewHBlur(argv []string) (*HBlur, error) {
+	if len(argv) != 2 {
+		return nil, errors.New("invalid syntax for hblur, expected usage: hblur <strength>")
+	}
+	strength, err := strconv.Atoi(argv[1])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("invalid parameter for hblur: %s", err.Error()))
+	}
 	if strength > 0 {
 		return &HBlur{
 			strength,

@@ -12,14 +12,13 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 )
 
-// # TODO:
 // - resizer
+// - input/output to mem
 // - doc/with many samples
-// - histo
+// - histo/tests
 
 var input_file = flag.String("infile", "", "input file")
 
@@ -108,58 +107,38 @@ func NewInstruction(s *Step, tokens []string, id int) (*Instruction, error) {
 
 	op := tokens[0]
 
+	var err error
+
 	switch op {
 
 	case "blur":
-		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for blur, expected usage: blur <radius>")
-		}
-		r, err := strconv.Atoi(tokens[1])
+		res.Operation, err = filters.NewBlur(tokens)
 		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for blur: %s", err.Error()))
-		}
-		res.Operation, err = filters.NewBlur(r)
-		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("can't create blur: %s", err.Error()))
+			s.Parent.Error(fmt.Sprintf("can't create blur: %s", err.Error()))
 		}
 
 	case "vblur":
-		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for vblur, expected usage: vblur <strength>")
-		}
-		r, err := strconv.Atoi(tokens[1])
-		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for vblur: %s", err.Error()))
-		}
-		res.Operation, err = filters.NewVBlur(r)
+		res.Operation, err = filters.NewVBlur(tokens)
 		if err != nil {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create vblur: %s", err.Error()))
 		}
 
 	case "hblur":
-		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for hblur, expected usage: hblur <strength>")
-		}
-		r, err := strconv.Atoi(tokens[1])
-		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for hblur: %s", err.Error()))
-		}
-		res.Operation, err = filters.NewHBlur(r)
+		res.Operation, err = filters.NewHBlur(tokens)
 		if err != nil {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create hblur: %s", err.Error()))
 		}
 
 	case "brightness":
-		if len(tokens) != 2 {
-			return nil, s.Parent.Error("invalid syntax for brightness, expected usage: brightness <strength>")
-		}
-		r, err := strconv.Atoi(tokens[1])
-		if err != nil {
-			return nil, s.Parent.Error(fmt.Sprintf("invalid parameter for brightness: %s", err.Error()))
-		}
-		res.Operation, err = filters.NewBrightness(r)
+		res.Operation, err = filters.NewBrightness(tokens)
 		if err != nil {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create brightness: %s", err.Error()))
+		}
+
+	case "resize":
+		res.Operation, err = filters.NewResize(tokens)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create resize: %s", err.Error()))
 		}
 
 	default:
@@ -242,7 +221,7 @@ func (s *Script) Error(e string) error {
 func (s *Script) Execute() error {
 	for i := 0; i < len(s.Steps); i++ {
 		cur_step := s.Steps[i]
-		fmt.Printf("step %d/%d\n", cur_step.Id, len(s.Steps))
+		fmt.Printf("step %d/%d (<- %s)\n", cur_step.Id, len(s.Steps), cur_step.Input)
 		img, err := GetImage(cur_step.Input)
 		if err != nil {
 			return errors.New(fmt.Sprintf("can't open input %s: %s", cur_step.Input, err.Error()))
@@ -260,7 +239,7 @@ func (s *Script) Execute() error {
 			fmt.Printf("done\n")
 		}
 		PutImage(*img, cur_step.Output)
-		fmt.Printf("done\n")
+		fmt.Printf("done (-> %s)\n", cur_step.Output)
 	}
 	return nil
 }
