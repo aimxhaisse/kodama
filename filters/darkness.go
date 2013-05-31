@@ -30,9 +30,8 @@ func NewDarkness(argv []string) (*Darkness, error) {
 	return nil, errors.New("parameter 'strength' must be > 0")
 }
 
-// IsScalable returns true because Darkness is a scalable filter
-func (filter *Darkness) IsScalable() bool {
-	return true
+// This filter is scalable
+func (filter *Darkness) IsScalable() {
 }
 
 // Process applies a darkness filter to the image

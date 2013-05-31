@@ -40,11 +40,6 @@ func NewResize(argv []string) (*Resize, error) {
 	}, nil
 }
 
-// IsScalable returns false because Resize is not a scalable filter
-func (filter *Resize) IsScalable() bool {
-	return false
-}
-
 // Process resizes the input image
 func (filter *Resize) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
 	*out = *image.NewRGBA(image.Rect(0, 0, filter.Width, filter.Height))

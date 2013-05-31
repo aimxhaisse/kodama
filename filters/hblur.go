@@ -30,11 +30,6 @@ func NewHBlur(argv []string) (*HBlur, error) {
 	return nil, errors.New("parameter 'strenght' must be > 0")
 }
 
-// IsScalable returns false because this filter is not scalable
-func (filter *HBlur) IsScalable() bool {
-	return false
-}
-
 // Process applies a horizontal blur filter to the image (efficient implementation)
 func (filter *HBlur) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {

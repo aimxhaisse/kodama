@@ -30,11 +30,6 @@ func NewVBlur(argv []string) (*VBlur, error) {
 	return nil, errors.New("parameter 'strenght' must be > 0")
 }
 
-// IsScalable returns false because VBlur is not a scalable filter
-func (filter *VBlur) IsScalable() bool {
-	return false
-}
-
 // Process applies a vertical blur filter to the image (efficient implementation)
 func (filter *VBlur) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {

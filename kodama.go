@@ -243,9 +243,10 @@ func (s *Script) Execute() error {
 			cur_instr := cur_step.Instructions[j]
 			fmt.Printf("\tinstruction %d/%d (%s)... ", cur_instr.Id, len(cur_step.Instructions), cur_instr.Argv[0])
 			op := cur_instr.Operation
-			if op.IsScalable() {
+			switch op.(type) {
+			case filters.ScalableFilter:
 				*img = ProcessInParallel(*img, 4, op)
-			} else {
+			case filters.Filter:
 				*img = ProcessInParallel(*img, 1, op)
 			}
 			fmt.Printf("done\n")

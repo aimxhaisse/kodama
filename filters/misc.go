@@ -5,7 +5,12 @@ import "image"
 // Filter creates a new image which is a filtered copy of the input
 type Filter interface {
 	Process(in image.Image, out *image.RGBA, area image.Rectangle)
-	IsScalable() bool
+}
+
+// ScalableFilter
+type ScalableFilter interface {
+	Filter
+	IsScalable()
 }
 
 // ClipInt clips an integer between min and max

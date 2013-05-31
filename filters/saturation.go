@@ -30,9 +30,8 @@ func NewSaturation(argv []string) (*Saturation, error) {
 	return nil, errors.New("parameter 'strength' must be > 0")
 }
 
-// IsScalable returns true because Saturation is a scalable filter
-func (filter *Saturation) IsScalable() bool {
-	return true
+// This filter is scalable
+func (filter *Saturation) IsScalable() {
 }
 
 // Process applies a saturation filter to the image

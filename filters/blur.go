@@ -30,9 +30,8 @@ func NewBlur(argv []string) (*Blur, error) {
 	return nil, errors.New("parameter 'radius' must be > 0")
 }
 
-// IsScalable returns true as this filter is scalable
-func (filter Blur) IsScalable() bool {
-	return true
+// This filter is scalable
+func (filter Blur) IsScalable() {
 }
 
 // Process applies a blur filter to the image
