@@ -2,10 +2,13 @@
 #
 # This file describes the syntax of kodama scripts.
 
-with bzh.jpg as bzh_400.jpg
+with input.jpg as input-processed.jpg
+     vblur 5
+     saturation 10
+     brightness 10
      resize 400 300
 done
 
-with bzh_400.jpg as bzh_2000.jpg
-     resize 2000 1800
+with input-processed.jpg as input-processed-thumb.jpg
+     resize 400 300
 done
