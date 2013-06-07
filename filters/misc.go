@@ -2,15 +2,14 @@ package filters
 
 import "image"
 
-// Filter creates a new image which is a filtered copy of the input
-type Filter interface {
-	Process(in image.Image, out *image.RGBA, area image.Rectangle)
+// Filters is a wrapper around images
+type FilterImage struct {
+	Image image.Image	// pointer to allow re-allocations
 }
 
-// ScalableFilter
-type ScalableFilter interface {
-	Filter
-	IsScalable()
+// Filter processes an image
+type Filter interface {
+	Process(img *FilterImage) error
 }
 
 // ClipInt clips an integer between min and max

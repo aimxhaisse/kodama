@@ -15,41 +15,10 @@ import (
 	"strings"
 )
 
-// - resizer
-// - input/output to mem
-// - doc/with many samples
-// - histo/tests
-
 var input_file = flag.String("infile", "", "input file")
 
-// Split a job and send chunks to several workers
-func ProcessInParallel(in image.Image, jobs int, worker filters.Filter) image.Image {
-	bounds := in.Bounds()
-	x_unit := (bounds.Max.X - bounds.Min.X) / jobs
-	ch := make(chan bool)
-	out := image.NewRGBA(bounds)
-	for i := 0; i < jobs; i++ {
-		min := image.Point{i * x_unit, bounds.Min.Y}
-		max := image.Point{(i + 1) * x_unit, bounds.Max.Y}
-		area := image.Rectangle{min, max}
-		go func(ch chan bool) {
-			worker.Process(in, out, area)
-			ch <- true
-		}(ch)
-	}
-	done := 0
-	// Wait for workers to complete
-	for done != jobs {
-		select {
-		case <-ch:
-			done++
-		}
-	}
-	return out.SubImage(bounds)
-}
-
 // GetImage returns the image pointed by path
-func GetImage(path string) (*image.Image, error) {
+func GetImage(path string) (*filters.FilterImage, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -59,16 +28,16 @@ func GetImage(path string) (*image.Image, error) {
 		return nil, err
 	}
 	file.Close()
-	return &image, nil
+	return &filters.FilterImage{image}, nil
 }
 
 // PutImage write the image to path
-func PutImage(image image.Image, path string) {
+func PutImage(image *filters.FilterImage, path string) {
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = jpeg.Encode(file, image, nil)
+	err = jpeg.Encode(file, image.Image, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -243,15 +212,13 @@ func (s *Script) Execute() error {
 			cur_instr := cur_step.Instructions[j]
 			fmt.Printf("\tinstruction %d/%d (%s)... ", cur_instr.Id, len(cur_step.Instructions), cur_instr.Argv[0])
 			op := cur_instr.Operation
-			switch op.(type) {
-			case filters.ScalableFilter:
-				*img = ProcessInParallel(*img, 4, op)
-			case filters.Filter:
-				*img = ProcessInParallel(*img, 1, op)
+			err = op.Process(img)
+			if err != nil {
+				return errors.New(fmt.Sprintf("can't process operation %s: %s", cur_instr.Argv[0], err.Error()))
 			}
 			fmt.Printf("done\n")
 		}
-		PutImage(*img, cur_step.Output)
+		PutImage(img, cur_step.Output)
 		fmt.Printf("done (-> %s)\n", cur_step.Output)
 	}
 	return nil

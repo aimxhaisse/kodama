@@ -41,12 +41,12 @@ func NewResize(argv []string) (*Resize, error) {
 }
 
 // Process resizes the input image
-func (filter *Resize) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
-	*out = *image.NewRGBA(image.Rect(0, 0, filter.Width, filter.Height))
-
+func (filter *Resize) Process(img *FilterImage) error {
+	in := img.Image
+	bounds := in.Bounds()
+	out := image.NewRGBA(image.Rect(0, 0, filter.Width, filter.Height))
 	ratio_x := float64(bounds.Max.X) / float64(filter.Width)
 	ratio_y := float64(bounds.Max.Y) / float64(filter.Height)
-
 	for x := 0; x < filter.Width; x++ {
 		for y := 0; y < filter.Height; y++ {
 			in_x := int(ratio_x * float64(x))
@@ -54,4 +54,6 @@ func (filter *Resize) Process(in image.Image, out *image.RGBA, bounds image.Rect
 			out.Set(x, y, in.At(in_x, in_y))
 		}
 	}
+	img.Image = out
+	return nil
 }

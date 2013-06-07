@@ -35,7 +35,10 @@ func (filter *Darkness) IsScalable() {
 }
 
 // Process applies a darkness filter to the image
-func (filter *Darkness) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
+func (filter *Darkness) Process(img *FilterImage) error {
+	in := img.Image
+	bounds := in.Bounds()
+	out := image.NewRGBA64(bounds)
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 			r, g, b, a := in.At(x, y).RGBA()
@@ -48,4 +51,6 @@ func (filter *Darkness) Process(in image.Image, out *image.RGBA, bounds image.Re
 			out.Set(x, y, nc)
 		}
 	}
+	img.Image = out
+	return nil
 }

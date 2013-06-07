@@ -35,7 +35,10 @@ func (filter *Saturation) IsScalable() {
 }
 
 // Process applies a saturation filter to the image
-func (filter *Saturation) Process(in image.Image, out *image.RGBA, bounds image.Rectangle) {
+func (filter *Saturation) Process(img *FilterImage) error {
+	in := img.Image
+	bounds := in.Bounds()
+	out := image.NewRGBA64(bounds)
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 			r, g, b, a := in.At(x, y).RGBA()
@@ -50,4 +53,6 @@ func (filter *Saturation) Process(in image.Image, out *image.RGBA, bounds image.
 			out.Set(x, y, nc)
 		}
 	}
+	img.Image = out
+	return nil
 }
