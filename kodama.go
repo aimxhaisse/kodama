@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"image/draw"
 	"io"
 	"kodama/filters"
 	"log"
@@ -23,12 +24,14 @@ func GetImage(path string) (*filters.FilterImage, error) {
 	if err != nil {
 		return nil, err
 	}
-	image, _, err := image.Decode(file)
+	defer file.Close()
+	img, _, err := image.Decode(file)
 	if err != nil {
 		return nil, err
 	}
-	file.Close()
-	return &filters.FilterImage{image}, nil
+	img64 := image.NewRGBA64(img.Bounds())
+	draw.Draw(img64, img64.Bounds(), img, image.Point{0, 0}, draw.Over)
+	return &filters.FilterImage{img64}, nil
 }
 
 // PutImage write the image to path

@@ -32,19 +32,18 @@ func NewHBlur(argv []string) (*HBlur, error) {
 
 // Process applies a horizontal blur filter to the image (efficient implementation)
 func (filter *HBlur) Process(img *FilterImage) error {
-	in := img.Image
-	bounds := in.Bounds()
-	out := image.NewRGBA64(bounds)
+	out := img.Image
+	bounds := out.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		prev_blur := filter.computeInitialBlur(in, bounds, y)
+		prev_blur := filter.computeInitialBlur(out, bounds, y)
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			prev_x := ClipInt(x-filter.Strength/2, 0, bounds.Max.X-1)
 			next_x := ClipInt(x+filter.Strength/2, 0, bounds.Max.X-1)
 
 			nb_elems := next_x - prev_x + 1
 
-			pr, pg, pb, pa := in.At(prev_x, y).RGBA()
-			nr, ng, nb, na := in.At(next_x, y).RGBA()
+			pr, pg, pb, pa := out.At(prev_x, y).RGBA()
+			nr, ng, nb, na := out.At(next_x, y).RGBA()
 			vbr, vbg, vbb, vba := prev_blur.RGBA()
 
 			cvbr := uint16(ClipInt((int(vbr)*nb_elems-int(pr)+int(nr))/nb_elems, 0, 0xFFFF))
@@ -57,7 +56,6 @@ func (filter *HBlur) Process(img *FilterImage) error {
 			prev_blur = next_blur
 		}
 	}
-	img.Image = out
 	return nil
 }
 

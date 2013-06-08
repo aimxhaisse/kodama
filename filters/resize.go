@@ -22,7 +22,7 @@ func NewResize(argv []string) (*Resize, error) {
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("invalid parameter for width: %s", err.Error()))
 	}
-	h, err := strconv.Atoi(argv[1])
+	h, err := strconv.Atoi(argv[2])
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("invalid parameter for height: %s", err.Error()))
 	}
@@ -44,7 +44,7 @@ func NewResize(argv []string) (*Resize, error) {
 func (filter *Resize) Process(img *FilterImage) error {
 	in := img.Image
 	bounds := in.Bounds()
-	out := image.NewRGBA(image.Rect(0, 0, filter.Width, filter.Height))
+	out := image.NewRGBA64(image.Rect(0, 0, filter.Width, filter.Height))
 	ratio_x := float64(bounds.Max.X) / float64(filter.Width)
 	ratio_y := float64(bounds.Max.Y) / float64(filter.Height)
 	for x := 0; x < filter.Width; x++ {

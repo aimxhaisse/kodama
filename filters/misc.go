@@ -4,7 +4,7 @@ import "image"
 
 // Filters is a wrapper around images
 type FilterImage struct {
-	Image image.Image	// pointer to allow re-allocations
+	Image *image.RGBA64
 }
 
 // Filter processes an image

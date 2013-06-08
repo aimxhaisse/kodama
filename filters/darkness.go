@@ -3,7 +3,6 @@ package filters
 import (
 	"errors"
 	"fmt"
-	"image"
 	"image/color"
 	"strconv"
 )
@@ -30,18 +29,13 @@ func NewDarkness(argv []string) (*Darkness, error) {
 	return nil, errors.New("parameter 'strength' must be > 0")
 }
 
-// This filter is scalable
-func (filter *Darkness) IsScalable() {
-}
-
 // Process applies a darkness filter to the image
 func (filter *Darkness) Process(img *FilterImage) error {
-	in := img.Image
-	bounds := in.Bounds()
-	out := image.NewRGBA64(bounds)
+	out := img.Image
+	bounds := out.Bounds()
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			r, g, b, a := in.At(x, y).RGBA()
+			r, g, b, a := out.At(x, y).RGBA()
 
 			nr := Strunc(int32(r - (0xFFFF*filter.Strength)/100))
 			ng := Strunc(int32(g - (0xFFFF*filter.Strength)/100))

@@ -34,7 +34,8 @@ func NewBlur(argv []string) (*Blur, error) {
 func (filter Blur) Process(img *FilterImage) error {
 	in := img.Image
 	bounds := in.Bounds()
-	out := image.NewRGBA64(bounds)	// This is a naive implementation with a high complexity.
+	out := image.NewRGBA64(bounds)
+	// This is a naive implementation with a high complexity.
 	// Each output pixel is the average of all pixels in its
 	// surrounding box, thus complexity is W*H*R^2
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {

@@ -32,19 +32,18 @@ func NewVBlur(argv []string) (*VBlur, error) {
 
 // Process applies a vertical blur filter to the image (efficient implementation)
 func (filter *VBlur) Process(img *FilterImage) error {
-	in := img.Image
-	bounds := in.Bounds()
-	out := image.NewRGBA64(bounds)
+	out := img.Image
+	bounds := out.Bounds()
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
-		prev_blur := filter.computeInitialBlur(in, bounds, x)
+		prev_blur := filter.computeInitialBlur(out, bounds, x)
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 			prev_y := ClipInt(y-filter.Strength/2, 0, bounds.Max.Y-1)
 			next_y := ClipInt(y+filter.Strength/2, 0, bounds.Max.Y-1)
 
 			nb_elems := next_y - prev_y + 1
 
-			pr, pg, pb, pa := in.At(x, prev_y).RGBA()
-			nr, ng, nb, na := in.At(x, next_y).RGBA()
+			pr, pg, pb, pa := out.At(x, prev_y).RGBA()
+			nr, ng, nb, na := out.At(x, next_y).RGBA()
 			vbr, vbg, vbb, vba := prev_blur.RGBA()
 
 			cvbr := uint16(ClipInt((int(vbr)*nb_elems-int(pr)+int(nr))/nb_elems, 0, 0xFFFF))
@@ -57,7 +56,6 @@ func (filter *VBlur) Process(img *FilterImage) error {
 			prev_blur = next_blur
 		}
 	}
-	img.Image = out
 	return nil
 }
 
