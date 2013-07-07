@@ -6,9 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"image"
-	"image/jpeg"
 	"image/draw"
+	"image/jpeg"
 	"io"
+	_ "kodama/cr2"
 	"kodama/filters"
 	"log"
 	"os"
@@ -19,8 +20,8 @@ import (
 var input_file = flag.String("infile", "", "input file")
 
 // GetImage returns the image pointed by path
-func GetImage(path string) (*filters.FilterImage, error) {
-	file, err := os.Open(path)
+func GetImage(p string) (*filters.FilterImage, error) {
+	file, err := os.Open(p)
 	if err != nil {
 		return nil, err
 	}

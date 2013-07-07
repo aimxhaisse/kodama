@@ -13,7 +13,7 @@ type Resize struct {
 	Height int // new height
 }
 
-// NewResize creates a new filter for brightness
+// NewResize creates a new filter for resizing
 func NewResize(argv []string) (*Resize, error) {
 	if len(argv) != 3 {
 		return nil, errors.New("invalid syntax for resize, expected usage: resize <width> <height>")
