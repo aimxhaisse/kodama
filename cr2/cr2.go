@@ -26,6 +26,7 @@ const cr2Header = "\x49\x49\x2a\x00????\x43\x52\x02\x00"
 // decoder is the internal representation of a cr2 file
 type decoder struct {
 	buf *bytes.Reader      // entire cr2 file in memory
+	tags map[string]string // tiff tags (last image overwrites previous values)
 }
 
 // scanHeader scans the tiff header
@@ -70,19 +71,28 @@ const (
 type TiffTagNames map[uint16]string
 
 var tiff_tag_names = TiffTagNames{
-	0x0100: "imageWidth",
-	0x0101: "imageHeight",
-	0x0102: "bitsPerSample",
-	0x0103: "compression",
-	0x010f: "maker",
-	0x0110: "model",
-	0x0111: "stripOffset",
-	0x0112: "orientaton",
-	0x0117: "stripByteCounts",
-	0x011a: "xResolution",
-	0x011b: "yResolution",
-	0x0128: "resolutionUnit",
-	0x0132: "dateTime",
+	0x0100: "ImageWidth",
+	0x0101: "ImageHeight",
+	0x0102: "BitsPerSample",
+	0x0103: "Compression",
+	0x0106: "PhotometricInterpretation",
+	0x010F: "Maker",
+	0x0110: "Model",
+	0x0111: "StripOffset",
+	0x0112: "Orientation",
+	0x0115: "SamplesPerPixel",
+	0x0116: "RowsPerStrip",
+	0x0117: "StripByteCounts",
+	0x011A: "XResolution",
+	0x011B: "YResolution",
+	0x011C: "PlanarConfiguration",
+	0x0128: "ResolutionUnit",
+	0x0132: "DateTime",
+	0x013B: "Artist",
+	0x0201: "JPEGInterchangeFormat",
+	0x0202: "JPEGInterchangeFormatLength",
+	0x02BC: "XMP",
+	0x8298: "Copyright",
 	0x8769: "EXIF",
 	0x8825: "GPSData",
 }
@@ -141,9 +151,9 @@ func (d decoder) scanImageFileEntry() error {
 	if err != nil {
 		return err
 	}
-	k, v, err := tag.prettify(d.buf)
+	k, v, _ := tag.prettify(d.buf)
 	if err != nil {
-		return err
+		d.tags[k] = v
 	}
 	fmt.Printf("%s: %s\n", k, v)
 	return nil
@@ -174,7 +184,7 @@ func Decode(r io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	d := &decoder{bytes.NewReader(buf)}
+	d := &decoder{bytes.NewReader(buf), make(map[string]string)}
 	err = d.scanHeader()
 	if err != nil {
 		return nil, err
