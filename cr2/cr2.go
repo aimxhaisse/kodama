@@ -68,9 +68,9 @@ const (
 )
 
 // known tiff tags names
-type TiffTagNames map[uint16]string
+type TagNames map[uint16]string
 
-var tiff_tag_names = TiffTagNames{
+var tag_names = TagNames{
 	0x0100: "ImageWidth",
 	0x0101: "ImageHeight",
 	0x0102: "BitsPerSample",
@@ -93,8 +93,46 @@ var tiff_tag_names = TiffTagNames{
 	0x0202: "JPEGInterchangeFormatLength",
 	0x02BC: "XMP",
 	0x8298: "Copyright",
-	0x8769: "EXIF",
+	0x8769: "Exif",
 	0x8825: "GPSData",
+	0x829A: "ExposureTime",
+	0x8822: "ExposureProgram",
+	0x8827: "ISOSpeedRatings",
+	0x8830: "SensitivityType",
+	0x8832: "RecommendedExposureIndex",
+	0x9000: "ExifVersion",
+	0x9003: "DateTimeOriginal",
+	0x9004: "CreateDate",
+	0x9101: "ComponentsConfiguration",
+	0x9102: "CompressedBitsPerPixel",
+	0x9201: "ShutterSpeedValue",
+	0x9202: "ApertureValue",
+	0x9204: "ExposureCompensation",
+	0x9207: "MeteringMode",
+	0x9209: "Flash",
+	0x920A: "FocalLength",
+	0x927C: "MakerNoteCanon",
+	0x9286: "UserComment",
+	0x9290: "SubSecTime",
+	0x9291: "SubSecTimeOriginal",
+	0x9292: "SubSecTimeDigitized",
+	0xA000: "FlashpixVersion",
+	0xA001: "ColorSpace",
+	0xA002: "ExifImageWidth",
+	0xA003: "ExifImageHeight",
+	0xA005: "InteropOffset",
+	0xA20E: "FocalPlaneXResolution",
+	0xA20F: "FocalPlaneYResolution",
+	0xA210: "FocalPlaneResolutionUnit",
+	0xA401: "CustomRendered",
+	0xA402: "ExposureMode",
+	0xA403: "WhiteBalance",
+	0xA406: "SceneCaptureType",
+	0xA430: "OwnerName",
+	0xA431: "SerialNumber",
+	0xA432: "LensInfo",
+	0xA434: "LensModel",
+	0xA435: "LensSerialNumber",
 }
 
 // String dumps the attributes of a tiffTag
@@ -104,7 +142,7 @@ func (t tiffTag) String() string {
 
 // prettify returns a key and a value representing the tag
 func (t tiffTag) prettify(r *bytes.Reader) (k string, v string, err error) {
-	k, ok := tiff_tag_names[t.Id]
+	k, ok := tag_names[t.Id]
 	if !ok {
 		k = fmt.Sprintf("unknownTag(0x%04X)", t.Id)
 	}
@@ -155,6 +193,22 @@ func (d decoder) scanImageFileEntry() error {
 	if err != nil {
 		d.tags[k] = v
 	}
+
+	// recursively scan EXIF sub-directory
+	if k == "Exif" {
+		// backup current offset before reading in buffer
+		back, err := d.buf.Seek(0, 1)
+		if err != nil {
+			return err
+		}
+
+		d.buf.Seek(int64(tag.Value), 0)
+		d.scanImageFileDirectory()
+
+		// restore position
+		d.buf.Seek(back, 0)
+	}
+
 	fmt.Printf("%s: %s\n", k, v)
 	return nil
 }
