@@ -26,7 +26,7 @@ const cr2Header = "\x49\x49\x2a\x00????\x43\x52\x02\x00"
 // decoder is the internal representation of a cr2 file
 type decoder struct {
 	buf *bytes.Reader      // entire cr2 file in memory
-	tags map[string]string // tiff tags (last image overwrites previous values)
+	Tags map[string]string // tiff tags (last image overwrites previous values)
 }
 
 // scanHeader scans the tiff header
@@ -144,7 +144,7 @@ func (t tiffTag) String() string {
 func (t tiffTag) prettify(r *bytes.Reader) (k string, v string, err error) {
 	k, ok := tag_names[t.Id]
 	if !ok {
-		k = fmt.Sprintf("unknownTag(0x%04X)", t.Id)
+		k = fmt.Sprintf("UnknownTag(0x%04X)", t.Id)
 	}
 
 	// backup current offset before reading in buffer
@@ -179,7 +179,7 @@ func (t tiffTag) prettify(r *bytes.Reader) (k string, v string, err error) {
 		
 	}
 
-	return k, "unknownValue", err
+	return k, "UnknownValue", err
 }
 
 // scanImageFileEntry scans a tiff tag
@@ -191,7 +191,7 @@ func (d decoder) scanImageFileEntry() error {
 	}
 	k, v, _ := tag.prettify(d.buf)
 	if err != nil {
-		d.tags[k] = v
+		d.Tags[k] = v
 	}
 
 	// recursively scan EXIF sub-directory
@@ -209,7 +209,6 @@ func (d decoder) scanImageFileEntry() error {
 		d.buf.Seek(back, 0)
 	}
 
-	fmt.Printf("%s: %s\n", k, v)
 	return nil
 }
 
@@ -231,6 +230,42 @@ func (d decoder) scanImageFileDirectory() error {
 	return nil
 }
 
+// scanMetaData scans all IFD directories and fetches all TIFF/EXIF tags
+func (d decoder) scanMetaData() error {
+	// get the offset of the first IFD section and move there
+	var offset uint32
+	err := binary.Read(d.buf, binary.LittleEndian, &offset)
+	if err != nil {
+		return err
+	}
+	_, err = d.buf.Seek(int64(offset), 0)
+	if err != nil {
+		return err
+	}
+
+	// CR2 format includes 4 sections, each is composed of a
+	// header containing metadata and a picture.
+	//
+	// We only deal with the fourth picture, which has the highest
+	// resolution (others are thumbnails designed for camera use).
+	for i := 0; i < 4; i++ {
+		err = d.scanImageFileDirectory()
+		if err != nil {
+			return err
+		}
+		err = binary.Read(d.buf, binary.LittleEndian, &offset)
+		if err != nil {
+			return err
+		}
+		_, err = d.buf.Seek(int64(offset), 0)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Decode reads a CR2 image from r and returns it as an image.Image.
 // The type of Image returned depends on the PNG contents.
 func Decode(r io.Reader) (image.Image, error) {
@@ -243,45 +278,17 @@ func Decode(r io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// get the offset of the first IFD section and move there
-	var offset uint32
-	err = binary.Read(d.buf, binary.LittleEndian, &offset)
-	if err != nil {
-		return nil, err
-	}
-	_, err = d.buf.Seek(int64(offset), 0)
+	err = d.scanMetaData()
 	if err != nil {
 		return nil, err
 	}
 
-	// CR2 format includes 4 sections, each is composed of a
-	// header containing metadata and a picture.
-	//
-	// We only deal with the fourth picture, which has the highest
-	// resolution (others are thumbnails designed for camera use).
-	for i := 0; i < 4; i++ {
-		err = d.scanImageFileDirectory()
-		if err != nil {
-			return nil, err
-		}
-		err = binary.Read(d.buf, binary.LittleEndian, &offset)
-		if err != nil {
-			return nil, err
-		}
-		_, err = d.buf.Seek(int64(offset), 0)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return nil, errors.New("cr2: not yet implemented")
+	return nil, errors.New("cr2: not yet (fully) implemented")
 }
 
-// DecodeConfig returns the color model and dimensions of a CR2 image without
-// decoding the entire image
+// DecodeConfig returns the color model and dimensions of a CR2 image
 func DecodeConfig(r io.Reader) (image.Config, error) {
-	return image.Config{}, errors.New("cr2: not yet implemented")
+	return image.Config{}, errors.New("cr2: not yet (fully) implemented")
 }
 
 func init() {
