@@ -16,6 +16,8 @@ import (
 	"io/ioutil"
 	"fmt"
 	"bufio"
+	"image/jpeg"
+	"strconv"
 )
 
 // Header of a little endian cr2 file:
@@ -133,6 +135,7 @@ var tag_names = TagNames{
 	0xA432: "LensInfo",
 	0xA434: "LensModel",
 	0xA435: "LensSerialNumber",
+	0xC640: "CR2Slices",
 }
 
 // String dumps the attributes of a tiffTag
@@ -190,7 +193,7 @@ func (d decoder) scanImageFileEntry() error {
 		return err
 	}
 	k, v, _ := tag.prettify(d.buf)
-	if err != nil {
+	if err == nil {
 		d.Tags[k] = v
 	}
 
@@ -230,6 +233,23 @@ func (d decoder) scanImageFileDirectory() error {
 	return nil
 }
 
+// scanLossLessJPEG simply calls the jpeg decoder to return the lossless image
+func (d decoder) scanLossLessJPEG() (image.Image, error) {
+	v, ok := d.Tags["JPEGInterchangeFormat"]
+	if !ok {
+		return nil, errors.New("cr2: can't find jpeg image")
+	}
+	offset, err := strconv.Atoi(v)
+	if err != nil {
+		return nil, err
+	}
+	_, err = d.buf.Seek(int64(offset), 0)
+	if err != nil {
+		return nil, err
+	}
+	return jpeg.Decode(d.buf)
+}
+
 // scanMetaData scans all IFD directories and fetches all TIFF/EXIF tags
 func (d decoder) scanMetaData() error {
 	// get the offset of the first IFD section and move there
@@ -257,6 +277,7 @@ func (d decoder) scanMetaData() error {
 		if err != nil {
 			return err
 		}
+		
 		_, err = d.buf.Seek(int64(offset), 0)
 		if err != nil {
 			return err
@@ -283,7 +304,8 @@ func Decode(r io.Reader) (image.Image, error) {
 		return nil, err
 	}
 
-	return nil, errors.New("cr2: not yet (fully) implemented")
+	// Now we can decode the JPEG section
+	return d.scanLossLessJPEG()
 }
 
 // DecodeConfig returns the color model and dimensions of a CR2 image
