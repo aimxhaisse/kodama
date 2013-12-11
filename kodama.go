@@ -9,8 +9,8 @@ import (
 	"image/draw"
 	"image/jpeg"
 	"io"
-	_ "kodama/cr2"
-	"kodama/filters"
+	_ "github.com/aimxhaisse/kodama/cr2"
+	"github.com/aimxhaisse/kodama/filters"
 	"log"
 	"os"
 	"runtime"
@@ -124,6 +124,12 @@ func NewInstruction(s *Step, tokens []string, id int) (*Instruction, error) {
 		res.Operation, err = filters.NewResize(tokens)
 		if err != nil {
 			return nil, s.Parent.Error(fmt.Sprintf("can't create resize: %s", err.Error()))
+		}
+
+	case "merge":
+		res.Operation, err = filters.NewMerge(tokens)
+		if err != nil {
+			return nil, s.Parent.Error(fmt.Sprintf("can't create merge: %s", err.Error()))
 		}
 
 	default:

@@ -2,13 +2,18 @@
 #
 # This file describes the syntax of kodama scripts.
 
-with input.jpg as input-processed.jpg
-     vblur 5
-     saturation 10
-     brightness 10
-     resize 400 300
-done
+#with input.jpg as input-processed.jpg
+#     vblur 5
+#     saturation 10
+#     brightness 10
+#     resize 400 300
+#done
 
-with input-processed.jpg as input-processed-thumb.jpg
-     resize 400 300
+#with input-processed.jpg as input-processed-thumb.jpg
+#     resize 400 300
+#done
+
+with rgb/red.jpg as rgb.jpg
+     merge rgb/blue.jpg
+     merge rgb/green.jpg
 done
